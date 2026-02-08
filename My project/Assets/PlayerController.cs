@@ -1,0 +1,36 @@
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float moveSpeed = 5f;
+    public Animator anim;
+    public float currentSpeed = 0f;
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        currentSpeed = moveSpeed;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if(Input.GetKey(KeyCode.A))
+        {
+            transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+            transform.localScale = new Vector3(1, 1, 1);
+            anim.SetFloat("Run", moveSpeed);
+
+        }
+        else
+        {
+            anim.SetFloat("Run", 0);
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            transform.Translate(Vector3.back * moveSpeed * Time.deltaTime);
+            transform.localScale = new Vector3(1, 1, -1);
+            anim.SetFloat("Run", moveSpeed);
+        }
+        
+    }
+}
