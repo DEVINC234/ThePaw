@@ -2,6 +2,15 @@ using UnityEngine;
 
 public class DogController : MonoBehaviour
 {
+    [Header("Intro Playful Circle")]
+    public bool playIntro = true;
+    public float circleRadius = 1.5f;
+    public float circleSpeed = 2f;
+    public float introDuration = 4f;
+
+    private float introTimer;
+    private float circleAngle = 0f;
+
     public Transform player;
     public Transform waypoint;
 
@@ -20,6 +29,12 @@ public class DogController : MonoBehaviour
 
     void Update()
     {
+        if (playIntro)
+        {
+            PlayfulCircle();
+            return;
+        }
+
         if (goToWaypoint && waypoint != null)
         {
             MoveToTarget(waypoint.position, runSpeed, true);
@@ -81,5 +96,41 @@ public class DogController : MonoBehaviour
     public void TriggerWaypoint()
     {
         goToWaypoint = true;
+    }
+    void PlayfulCircle()
+    {
+        if (player == null) return;
+
+        introTimer += Time.deltaTime;
+
+        // Increase angle over time
+        circleAngle += circleSpeed * Time.deltaTime;
+
+        // Calculate circular position
+        float x = Mathf.Cos(circleAngle) * circleRadius;
+        float z = Mathf.Sin(circleAngle) * circleRadius;
+
+        Vector3 circlePosition = player.position + new Vector3(x, 0f, z);
+
+        // Move toward circle position
+        Vector3 direction = (circlePosition - transform.position).normalized;
+        transform.Translate(direction * walkSpeed * Time.deltaTime, Space.World);
+
+        // Rotate toward movement
+        if (direction != Vector3.zero)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(direction);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
+
+        anim.SetBool("Walk", false);
+        anim.SetBool("Run", true);
+
+        // End intro
+        if (introTimer >= introDuration)
+        {
+            playIntro = false;
+            anim.SetBool("Run", false);
+        }
     }
 }
