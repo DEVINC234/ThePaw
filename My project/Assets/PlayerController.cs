@@ -14,10 +14,10 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKey(KeyCode.A))
+        if (Input.GetKey(KeyCode.A))
         {
             transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
-            transform.localScale = new Vector3(1, 1, 1);
+            transform.rotation = Quaternion.Euler(0, 0, 0);
             anim.SetFloat("Run", moveSpeed);
 
         }
@@ -27,10 +27,15 @@ public class PlayerController : MonoBehaviour
         }
         if (Input.GetKey(KeyCode.D))
         {
-            transform.Translate(Vector3.back * moveSpeed * Time.deltaTime);
-            transform.localScale = new Vector3(1, 1, -1);
+            transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Euler(0, 180, 0);
             anim.SetFloat("Run", moveSpeed);
         }
-        
+        if (Input.GetKey(KeyCode.E))
+        {
+            DogController dog = FindObjectOfType<DogController>();
+            dog.TriggerWaypoint();
+
+        }
     }
 }
