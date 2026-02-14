@@ -1408,7 +1408,7 @@ MonoBehaviour:
   normalSpeed: 5
   pushSpeed: 2
   anim: {fileID: 948260032556729268}
-  pushDistance: 1.2
+  pushDistance: 0.7
   pushLayer:
     serializedVersion: 2
     m_Bits: 64

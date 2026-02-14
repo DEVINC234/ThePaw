@@ -9,7 +9,7 @@ public class PlayerController : MonoBehaviour
     public Animator anim;
 
     [Header("Push Settings")]
-    public float pushDistance = 1.2f;
+    public float pushDistance = 0.8f;
     public LayerMask pushLayer;
 
     private pushable currentPushable;
@@ -72,21 +72,18 @@ public class PlayerController : MonoBehaviour
                     }
                     
                     currentPushable.StartPush(transform.forward);
-                    Vector3 targetPosition = currentPushable.transform.position - transform.forward * 1.2f;
-                    transform.position = new Vector3(targetPosition.x, transform.position.y, targetPosition.z);
+                    //Vector3 targetPosition = currentPushable.transform.position - transform.forward * 1.2f;
+                    //transform.position = new Vector3(targetPosition.x, transform.position.y, targetPosition.z);
                     return;
-                }
-                else
-                {
-                    anim.SetBool("Push", false);
                 }
             }
         }
 
         // If we reach here, stop pushing
+        
         StopPushing();
 
-        // If not pushing and E pressed once → trigger dog
+      
         if (!isPushing && Input.GetKeyDown(KeyCode.E))
         {
             if (dog != null)
@@ -100,7 +97,7 @@ public class PlayerController : MonoBehaviour
         {
             currentPushable.StopPush();
         }
-
+        anim.SetBool("Push", false);
         isPushing = false;
         currentPushable = null;
         currentSpeed = normalSpeed;
