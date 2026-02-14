@@ -20,28 +20,43 @@ public class DogController : MonoBehaviour
     public float rotationSpeed = 5f;
 
     private Animator anim;
-    private bool goToWaypoint = false;
+
+    public enum DogState
+    {
+        Intro,
+        Follow,
+        MovingToWaypoint,
+        Waiting
+    }
+
+    private DogState currentState;
 
     void Start()
     {
         anim = GetComponent<Animator>();
+        currentState = playIntro ? DogState.Intro : DogState.Follow;
     }
 
     void Update()
     {
-        if (playIntro)
+        switch (currentState)
         {
-            PlayfulCircle();
-            return;
-        }
+            case DogState.Intro:
+                PlayfulCircle();
+                break;
 
-        if (goToWaypoint && waypoint != null)
-        {
-            MoveToTarget(waypoint.position, runSpeed, true);
-        }
-        else
-        {
-            FollowPlayer();
+            case DogState.Follow:
+                FollowPlayer();
+                break;
+
+            case DogState.MovingToWaypoint:
+                if (waypoint != null)
+                    MoveToTarget(waypoint.position, runSpeed, true);
+                break;
+
+            case DogState.Waiting:
+                StopMovement();
+                break;
         }
     }
 
@@ -68,21 +83,20 @@ public class DogController : MonoBehaviour
         {
             direction.Normalize();
 
-            // Move
             transform.Translate(direction * speed * Time.deltaTime, Space.World);
 
-            // Rotate smoothly
             Quaternion targetRot = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
 
-            // Animator control
             anim.SetBool("Walk", !running);
             anim.SetBool("Run", running);
         }
         else
         {
             StopMovement();
-            goToWaypoint = false;
+
+            if (currentState == DogState.MovingToWaypoint)
+                currentState = DogState.Waiting;
         }
     }
 
@@ -92,31 +106,35 @@ public class DogController : MonoBehaviour
         anim.SetBool("Run", false);
     }
 
-    // Call this when puzzle starts
     public void TriggerWaypoint()
     {
-        goToWaypoint = true;
+        if (currentState == DogState.Follow)
+        {
+            currentState = DogState.MovingToWaypoint;
+        }
     }
+
+    public void ReturnToPlayer()
+    {
+        currentState = DogState.Follow;
+    }
+
     void PlayfulCircle()
     {
         if (player == null) return;
 
         introTimer += Time.deltaTime;
-
-        // Increase angle over time
         circleAngle += circleSpeed * Time.deltaTime;
 
-        // Calculate circular position
         float x = Mathf.Cos(circleAngle) * circleRadius;
         float z = Mathf.Sin(circleAngle) * circleRadius;
 
         Vector3 circlePosition = player.position + new Vector3(x, 0f, z);
 
-        // Move toward circle position
         Vector3 direction = (circlePosition - transform.position).normalized;
+
         transform.Translate(direction * walkSpeed * Time.deltaTime, Space.World);
 
-        // Rotate toward movement
         if (direction != Vector3.zero)
         {
             Quaternion targetRot = Quaternion.LookRotation(direction);
@@ -126,10 +144,10 @@ public class DogController : MonoBehaviour
         anim.SetBool("Walk", false);
         anim.SetBool("Run", true);
 
-        // End intro
         if (introTimer >= introDuration)
         {
             playIntro = false;
+            currentState = DogState.Follow;
             anim.SetBool("Run", false);
         }
     }

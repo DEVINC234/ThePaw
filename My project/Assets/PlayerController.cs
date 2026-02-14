@@ -1,41 +1,108 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    [Header("Movement")]
+    public float normalSpeed = 5f;
+    public float pushSpeed = 2f;
+    private float currentSpeed;
     public Animator anim;
-    public float currentSpeed = 0f;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
+    [Header("Push Settings")]
+    public float pushDistance = 1.2f;
+    public LayerMask pushLayer;
+
+    private pushable currentPushable;
+    private bool isPushing = false;
+
+    private DogController dog;
+
     void Start()
     {
-        currentSpeed = moveSpeed;
+        currentSpeed = normalSpeed;
+        dog = FindObjectOfType<DogController>();
     }
 
-    // Update is called once per frame
     void Update()
+    {
+        HandleMovement();
+        HandlePush();
+    }
+
+    void HandleMovement()
     {
         if (Input.GetKey(KeyCode.A))
         {
-            transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
             transform.rotation = Quaternion.Euler(0, 0, 0);
-            anim.SetFloat("Run", moveSpeed);
-
+            transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
+            anim.SetFloat("Run", currentSpeed);
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            transform.rotation = Quaternion.Euler(0, 180, 0);
+            transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
+            anim.SetFloat("Run", currentSpeed);
         }
         else
         {
             anim.SetFloat("Run", 0);
         }
-        if (Input.GetKey(KeyCode.D))
-        {
-            transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
-            transform.rotation = Quaternion.Euler(0, 180, 0);
-            anim.SetFloat("Run", moveSpeed);
-        }
-        if (Input.GetKey(KeyCode.E))
-        {
-            DogController dog = FindObjectOfType<DogController>();
-            dog.TriggerWaypoint();
+    }
 
+    void HandlePush()
+    {
+        RaycastHit hit;
+
+        // Check if player is close enough and facing a pushable object
+        if (Physics.Raycast(transform.position, transform.forward, out hit, pushDistance, pushLayer))
+        {
+            pushable Pushable = hit.collider.GetComponent<pushable>();
+           
+            if (Pushable != null)
+            {
+                // HOLD E to push
+                if (Input.GetKey(KeyCode.E))
+                {
+                    if (!isPushing)
+                    {
+                        anim.SetBool("Push", true);
+                        isPushing = true;
+                        currentPushable = Pushable;
+                        currentSpeed = pushSpeed;
+                    }
+                    
+                    currentPushable.StartPush(transform.forward);
+                    Vector3 targetPosition = currentPushable.transform.position - transform.forward * 1.2f;
+                    transform.position = new Vector3(targetPosition.x, transform.position.y, targetPosition.z);
+                    return;
+                }
+                else
+                {
+                    anim.SetBool("Push", false);
+                }
+            }
         }
+
+        // If we reach here, stop pushing
+        StopPushing();
+
+        // If not pushing and E pressed once → trigger dog
+        if (!isPushing && Input.GetKeyDown(KeyCode.E))
+        {
+            if (dog != null)
+                dog.TriggerWaypoint();
+        }
+    }
+
+    void StopPushing()
+    {
+        if (isPushing && currentPushable != null)
+        {
+            currentPushable.StopPush();
+        }
+
+        isPushing = false;
+        currentPushable = null;
+        currentSpeed = normalSpeed;
     }
 }
