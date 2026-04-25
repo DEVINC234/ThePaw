@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Rendering.PostProcessing;
 
 
 public class PlayerController : MonoBehaviour
@@ -8,11 +9,24 @@ public class PlayerController : MonoBehaviour
     public float pushSpeed = 2f;
     public Animator anim;
 
+    [Header("Trauma Visuals")]
+    public PostProcessVolume traumaVolume;
+    public float fearFreezeDuration = 3.0f;
+    private bool isFrozenByFear = false;
+    private Vignette vignette;
+    private ColorGrading colorGrading; // New for Black and White
+
     [Header("Push/Pull Settings")]
     public float interactionDistance = 1.0f;
     public LayerMask pushLayer;
 
-    // Dynamic Keys (Loaded from Menu)
+    [Header("Fetch Settings")]
+    public GameObject ballPrefab;
+    public Transform throwPoint; 
+    public float throwForce = 12f;
+    public float verticalArc = 2f;
+
+    // Keys
     private KeyCode moveLeftKey;
     private KeyCode moveRightKey;
     private KeyCode interactionKey;
@@ -21,23 +35,22 @@ public class PlayerController : MonoBehaviour
     private bool isPushing = false;
     private pushable currentPushable;
     private DogController dog;
-    private Rigidbody rb;
 
     void Start()
     {
-        // Add this line to force the game to read the LATEST saves
         LoadControls();
-
         currentSpeed = normalSpeed;
         dog = FindObjectOfType<DogController>();
-        rb = GetComponent<Rigidbody>();
+        // Setup Post Processing
+        if (traumaVolume != null)
+        {
+            traumaVolume.profile.TryGetSettings(out vignette);
+            traumaVolume.profile.TryGetSettings(out colorGrading);
+        }
     }
 
     public void LoadControls()
     {
-        string debugLeft = PlayerPrefs.GetString("Key_Left", "DEFAULT_A");
-        Debug.Log("<color=cyan>PLAYER SCRIPT LOADING:</color> Left Key found in prefs is: " + debugLeft);
-
         moveLeftKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Left", "A"));
         moveRightKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "D"));
         interactionKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Interact", "E"));
@@ -45,35 +58,72 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (isFrozenByFear)
+        {
+            HandleTraumaState();
+            return;
+        }
+
         HandlePushInput();
         HandleMovement();
+        if (!isPushing && !isFrozenByFear && Input.GetKeyDown(KeyCode.G)) // Press G to throw
+        {
+            ThrowObject();
+            anim.SetBool("Throw", true);
+        }
+        else
+        {
+            anim.SetBool("Throw", false);
+        }
+    }
+    void ThrowObject()
+    {
+        GameObject ball = Instantiate(ballPrefab, throwPoint.position, throwPoint.rotation);
+
+        Rigidbody rb = ball.GetComponent<Rigidbody>();
+        Vector3 throwDir = (transform.forward + Vector3.up * 0.2f).normalized;
+        rb.AddForce(throwDir * throwForce, ForceMode.Impulse);
+        if (dog != null) dog.GoFetch(ball.transform);
+    }
+    public void GetSpotted()
+    {
+        if (!isFrozenByFear)
+        {
+            isFrozenByFear = true;
+            // Fully close vignette and drain color
+            if (vignette != null) vignette.intensity.value = 0.6f;
+            if (colorGrading != null) colorGrading.saturation.value = -100f; // Black and White
+
+            if (isPushing) StopPushing();
+            anim.SetFloat("Run", 0);
+        }
+    }
+
+    void HandleTraumaState()
+    {
+        // Slowly return to normal over time
+        if (vignette != null)
+            vignette.intensity.value = Mathf.Lerp(vignette.intensity.value, 0, Time.deltaTime);
+
+        if (colorGrading != null)
+            colorGrading.saturation.value = Mathf.Lerp(colorGrading.saturation.value, 0, Time.deltaTime);
+
+        if (vignette.intensity.value < 0.05f) isFrozenByFear = false;
     }
 
     void HandleMovement()
     {
         float moveInput = 0;
+        if (Input.GetKey(moveLeftKey)) moveInput = 1;
+        if (Input.GetKey(moveRightKey)) moveInput = -1;
 
-        // 1. Check Rebindable Keyboard Keys
-        if (Input.GetKey(moveLeftKey)) moveInput = -1;
-        if (Input.GetKey(moveRightKey)) moveInput = 1;
-
-        // 2. Check Joystick (Horizontal Axis)
-        // This allows for analog "creeping" or full "HST" throttle
-        float joyInput = Input.GetAxis("Horizontal");
-
-        // Combine them (clamped so you don't go double speed if pressing both)
-        float combinedInput = Mathf.Clamp(moveInput + joyInput, -1f, 1f);
-
-        if (Mathf.Abs(combinedInput) > 0.1f)
+        if (Mathf.Abs(moveInput) > 0.1f)
         {
             if (!isPushing)
             {
-                // Smooth rotation based on combined input direction
-                float targetY = (combinedInput < 0) ? 0 : 180;
+                float targetY = (moveInput < 0) ? 180 : 0;
                 transform.rotation = Quaternion.Euler(0, targetY, 0);
             }
-
-            // Move the player
             transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
             anim.SetFloat("Run", currentSpeed);
         }
@@ -88,19 +138,15 @@ public class PlayerController : MonoBehaviour
         RaycastHit hit;
         bool hitSomething = Physics.Raycast(transform.position + Vector3.up * 0.5f, transform.forward, out hit, interactionDistance, pushLayer);
 
-        // Uses the dynamic interaction key
         if (hitSomething && Input.GetKey(interactionKey))
         {
             pushable p = hit.collider.GetComponent<pushable>();
             if (p != null)
             {
                 StartPushing(p);
-
-                // Direction logic for the crate
                 float moveDir = 0;
-                if (Input.GetKey(moveLeftKey) || Input.GetAxis("Horizontal") < -0.1f) moveDir = 1;
-                if (Input.GetKey(moveRightKey) || Input.GetAxis("Horizontal") > 0.1f) moveDir = -1;
-
+                if (Input.GetKey(moveLeftKey)) moveDir = 1;
+                if (Input.GetKey(moveRightKey)) moveDir = -1;
                 currentPushable.StartPush(transform.forward * moveDir);
                 return;
             }
@@ -108,7 +154,7 @@ public class PlayerController : MonoBehaviour
 
         if (isPushing) StopPushing();
 
-        // Trigger dog waypoint with dynamic key
+        // THE "E" TO TRIGGER DOG WAYPOINT
         if (!isPushing && Input.GetKeyDown(interactionKey))
         {
             if (dog != null) dog.TriggerWaypoint();
@@ -132,9 +178,9 @@ public class PlayerController : MonoBehaviour
         anim.SetBool("Push", false);
     }
 
-    private void OnDrawGizmosSelected()
+    public void ForceUnfreeze()
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawRay(transform.position + Vector3.up * 0.5f, transform.forward * interactionDistance);
+        isFrozenByFear = false;
+        if (vignette != null) vignette.intensity.value = 0;
     }
 }
