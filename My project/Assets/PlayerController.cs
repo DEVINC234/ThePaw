@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
+using System.Collections;
 
 
 public class PlayerController : MonoBehaviour
@@ -26,6 +27,18 @@ public class PlayerController : MonoBehaviour
     public float throwForce = 12f;
     public float verticalArc = 2f;
 
+    [Header("Physics & Jump")]
+    public float jumpForce = 7f;
+    public float checkDistance = 0.2f; // Distance for ground check
+    public LayerMask groundLayer;
+    private Rigidbody rb;
+    private bool isGrounded;
+
+    [Header("Interaction Settings")]
+    public Transform handSocket; // The empty object in your RightHand bone
+    public float grabDistance = 2.0f;
+    private fetchItem currentItem;
+
     // Keys
     private KeyCode moveLeftKey;
     private KeyCode moveRightKey;
@@ -35,9 +48,10 @@ public class PlayerController : MonoBehaviour
     private bool isPushing = false;
     private pushable currentPushable;
     private DogController dog;
-
+    private bool isHoldingBall = false;
     void Start()
     {
+        rb = GetComponent<Rigidbody>();
         LoadControls();
         currentSpeed = normalSpeed;
         dog = FindObjectOfType<DogController>();
@@ -66,24 +80,103 @@ public class PlayerController : MonoBehaviour
 
         HandlePushInput();
         HandleMovement();
-        if (!isPushing && !isFrozenByFear && Input.GetKeyDown(KeyCode.G)) // Press G to throw
+
+        if (Input.GetKeyDown(KeyCode.E) && currentItem == null)
         {
-            ThrowObject();
+            anim.SetBool("isGrabbing", true);
+            StartCoroutine(GrabSequence());
+        }
+        else
+        {
+            anim.SetBool("isGrabbing", false);
+        }
+
+
+        // Check for "G" to Throw (Only if holding something)
+        if (Input.GetKeyDown(KeyCode.G) && currentItem != null)
+        {
+            StartCoroutine(ThrowSequence());
             anim.SetBool("Throw", true);
         }
         else
         {
             anim.SetBool("Throw", false);
         }
-    }
-    void ThrowObject()
-    {
-        GameObject ball = Instantiate(ballPrefab, throwPoint.position, throwPoint.rotation);
+        // 1. Check if the player is touching the ground
+        isGrounded = Physics.Raycast(transform.position, Vector3.down, checkDistance, groundLayer);
 
-        Rigidbody rb = ball.GetComponent<Rigidbody>();
-        Vector3 throwDir = (transform.forward + Vector3.up * 0.2f).normalized;
-        rb.AddForce(throwDir * throwForce, ForceMode.Impulse);
-        if (dog != null) dog.GoFetch(ball.transform);
+        // 2. Jump Input
+        if (Input.GetButtonDown("Jump") && isGrounded)
+        {
+            anim.SetBool("isJumping", true);
+            PerformJump();
+        }
+        else
+        {
+            anim.SetBool("isJumping", false);
+        }
+
+        
+    }
+    void PerformJump()
+    {
+        // We reset vertical velocity first so double-jumps don't stack weirdly
+        rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0);
+
+        // Apply the upward force
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+    }
+    IEnumerator GrabSequence()
+    {
+        // Set the bool to true to start the animation
+        anim.SetBool("isGrabbing", true);
+
+        // Wait for the hand to reach the item (adjust time to match your anim)
+        yield return new WaitForSeconds(0.5f);
+
+        Collider[] items = Physics.OverlapSphere(transform.position, grabDistance);
+        foreach (var col in items)
+        {
+            fetchItem item = col.GetComponent<fetchItem>();
+            if (item != null)
+            {
+                item.OnPickedUp(handSocket);
+                currentItem = item;
+                isHoldingBall = true;
+                break;
+            }
+        }
+
+        // Turn the bool off so he returns to Idle (holding the ball)
+        anim.SetBool("isGrabbing", false);
+    }
+
+    IEnumerator ThrowSequence()
+    {
+
+        yield return new WaitForSeconds(0.3f);
+
+        if (currentItem != null)
+        {
+            // 3. Physic Release
+            Rigidbody itemRb = currentItem.GetComponent<Rigidbody>();
+            currentItem.OnDropped();
+
+            Vector3 throwDir = (transform.forward + Vector3.up * 0.2f).normalized;
+            itemRb.AddForce(throwDir * throwForce, ForceMode.Impulse);
+
+            // 4. Tell the Dog to go get it!
+            if (dog != null) dog.GoFetch(currentItem.transform);
+
+            currentItem = null; // Clear player's hand
+        }
+    }
+    public void ReceiveBallFromDog(fetchItem returnedItem)
+    {
+        currentItem = returnedItem;
+        isHoldingBall = true;
+        // Optional: Play a "catch" animation or sound here
+        Debug.Log("Ball received from dog. Ready to throw!");
     }
     public void GetSpotted()
     {
