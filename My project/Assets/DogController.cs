@@ -159,6 +159,19 @@ public class DogController : MonoBehaviour
     {
         fetchItem itemScript = targetItem.GetComponent<fetchItem>();
         PlayerController playerScript = player.GetComponent<PlayerController>();
+        PlayerInvectory inv = player.GetComponent<PlayerInvectory>();
+
+        if (inv != null)
+        {
+            // Dog puts the ball "back" into your inventory system
+            inv.CollectBall();
+
+            // Reset dog state
+            hasItem = false;
+            targetItem = null;
+            currentState = DogState.Follow;
+            Debug.Log("Ball returned to inventory slot 1.");
+        }
 
         if (itemScript != null && playerScript != null)
         {

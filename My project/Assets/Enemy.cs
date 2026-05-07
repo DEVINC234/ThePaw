@@ -47,7 +47,7 @@ public class Enemy : MonoBehaviour
         // If player is inside the cone, trigger the trauma
         if (Vector3.Angle(transform.forward, dir) < 25f && dir.magnitude < range)
         {
-            playerTransform.GetComponent<PlayerController>().GetSpotted();
+            //playerTransform.GetComponent<PlayerController>().GetSpotted();
         }
     }
     void Patrol()
@@ -70,7 +70,7 @@ public class Enemy : MonoBehaviour
             {
                 if (hit.collider.CompareTag("Player"))
                 {
-                    player.GetComponent<PlayerController>().GetSpotted();
+                    //player.GetComponent<PlayerController>().GetSpotted();
                     visionLight.color = Color.red;
                 }
             }
