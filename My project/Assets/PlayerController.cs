@@ -56,6 +56,9 @@ public class PlayerController : MonoBehaviour
 
     public PlayerInvectory inv;
 
+    [Header("Switching Logic")]
+    public bool isControlled = true;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
@@ -78,6 +81,13 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (!isControlled)
+        {
+            anim.SetFloat("Run", 0);
+            anim.SetBool("Push", false);
+            return;
+        }
+
         if (isFrozenByFear)
         {
             HandleTraumaState();
@@ -258,4 +268,5 @@ public class PlayerController : MonoBehaviour
     public void ForceUnfreeze() { isFrozenByFear = false; if (vignette != null) vignette.intensity.value = 0; }
     void HandleTraumaState() { if (vignette != null) vignette.intensity.value = Mathf.Lerp(vignette.intensity.value, 0, Time.deltaTime); if (colorGrading != null) colorGrading.saturation.value = Mathf.Lerp(colorGrading.saturation.value, 0, Time.deltaTime); if (vignette.intensity.value < 0.05f) isFrozenByFear = false; }
 }
+
 

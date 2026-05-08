@@ -5676,6 +5676,54 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!1 &823271670
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 823271672}
+  - component: {fileID: 823271671}
+  m_Layer: 0
+  m_Name: CharacterSwitching
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &823271671
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823271670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d36894220b79aaa4586eabb9ae88cad9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  boyScript: {fileID: 1323463017}
+  dogScript: {fileID: 4318684945730604165}
+  boyCamera: {fileID: 360099494}
+  dogCamera: {fileID: 1448589390}
+--- !u!4 &823271672
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823271670}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.58555, y: -0.7, z: 10.81216}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &939033658
 GameObject:
   m_ObjectHideFlags: 0
@@ -6087,6 +6135,7 @@ MonoBehaviour:
   handSocket: {fileID: 206165629}
   grabDistance: 2
   inv: {fileID: 5472742442395427387}
+  isControlled: 1
 --- !u!1 &1364432452
 GameObject:
   m_ObjectHideFlags: 0
@@ -6202,6 +6251,117 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3505170223444121150}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1448589390
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1448589391}
+  - component: {fileID: 1448589393}
+  - component: {fileID: 1448589392}
+  - component: {fileID: 1448589394}
+  m_Layer: 0
+  m_Name: DogCam
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1448589391
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448589390}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: 0.7004734, z: -0, w: 0.7136785}
+  m_LocalPosition: {x: -5.4469247, y: 0.2100001, z: 3.505069}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 88.93, z: 0}
+--- !u!81 &1448589392
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448589390}
+  m_Enabled: 1
+--- !u!20 &1448589393
+Camera:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448589390}
+  m_Enabled: 1
+  serializedVersion: 2
+  m_ClearFlags: 1
+  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
+  m_Iso: 200
+  m_ShutterSpeed: 0.005
+  m_Aperture: 16
+  m_FocusDistance: 10
+  m_FocalLength: 50
+  m_BladeCount: 5
+  m_Curvature: {x: 2, y: 11}
+  m_BarrelClipping: 0.25
+  m_Anamorphism: 0
+  m_SensorSize: {x: 36, y: 24}
+  m_LensShift: {x: 0, y: 0}
+  m_NormalizedViewPortRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  near clip plane: 0.3
+  far clip plane: 1000
+  field of view: 60
+  orthographic: 0
+  orthographic size: 5
+  m_Depth: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingPath: -1
+  m_TargetTexture: {fileID: 0}
+  m_TargetDisplay: 0
+  m_TargetEye: 3
+  m_HDR: 1
+  m_AllowMSAA: 1
+  m_AllowDynamicResolution: 0
+  m_ForceIntoRT: 0
+  m_OcclusionCulling: 1
+  m_StereoConvergence: 10
+  m_StereoSeparation: 0.022
+--- !u!114 &1448589394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1448589390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35b720625f5355440a48015a55d97f6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  player: {fileID: 3505170223444121150}
+  offset: {x: -3.5068996, y: 1.2, z: 0}
+  idleX: -3.5
+  moveX: -4.3
+  followSpeed: 5
+  shiftSpeed: 3
 --- !u!1 &1487776201
 GameObject:
   m_ObjectHideFlags: 0
@@ -8466,6 +8626,7 @@ MonoBehaviour:
   distractKey: 113
   dogJumpForce: 5
   mouthSocket: {fileID: 1407540982}
+  isControlled: 0
   player: {fileID: 5472742442395427383}
 --- !u!54 &4318684945730604166
 Rigidbody:
@@ -11023,6 +11184,7 @@ Transform:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 1448589391}
   - {fileID: 360099497}
   - {fileID: 2022010790}
   - {fileID: 1487776205}
@@ -11037,3 +11199,4 @@ SceneRoots:
   - {fileID: 1541204832}
   - {fileID: 1247803870}
   - {fileID: 784095324}
+  - {fileID: 823271672}

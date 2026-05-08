@@ -41,6 +41,9 @@ public class DogController : MonoBehaviour
     private Transform targetItem;
     private bool hasItem = false;
 
+    [Header("Control Settings")]
+    public bool isControlled = false;
+
     public Transform player;
     private Animator anim;
 
@@ -58,7 +61,11 @@ public class DogController : MonoBehaviour
     void Update()
     {
         if (player == null) return;
-
+        if (isControlled)
+        {
+            HandleManualMovement();
+            return; // Skip the switch statement below
+        }
         ScanForEnemies();
 
         switch (currentState)
@@ -78,6 +85,28 @@ public class DogController : MonoBehaviour
         CheckForPlayerDistress();
         HandleHeightLogic();
 
+    }
+    void HandleManualMovement()
+    {
+        float v = 0;
+        if (Input.GetKey(KeyCode.A)) v = 1;
+        if (Input.GetKey(KeyCode.D)) v = -1;
+
+        float h = 0;
+        if (Input.GetKey(KeyCode.W)) h = 1;
+        if (Input.GetKey(KeyCode.S)) h = -1;
+
+        Vector3 moveDir = new Vector3(h, 0, v);
+
+        if (moveDir.magnitude > 0.1f)
+        {
+            // Use your existing MoveToTarget logic but with manual direction
+            MoveToTarget(transform.position + moveDir, runSpeed, true);
+        }
+        else
+        {
+            StopMovement();
+        }
     }
     void HandleFetchLogic()
     {
@@ -283,3 +312,4 @@ public class DogController : MonoBehaviour
         if (introTimer >= introDuration) { playIntro = false; currentState = DogState.Follow; }
     }
 }
+
