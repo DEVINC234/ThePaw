@@ -110,16 +110,16 @@ public class DogController : MonoBehaviour
     }
     void HandleFetchLogic()
     {
+        GateKey key = gameObject.GetComponent<GateKey>();
         if (targetItem == null)
         {
             currentState = DogState.Follow;
             return;
         }
-
+        
         float distToItem = Vector3.Distance(transform.position, targetItem.position);
         float distToPlayer = Vector3.Distance(transform.position, player.position);
 
-        // PHASE 1: RUN TO THE ITEM
         if (currentState == DogState.Fetching && !hasItem)
         {
             MoveToTarget(targetItem.position, runSpeed, true);
@@ -131,19 +131,18 @@ public class DogController : MonoBehaviour
                 {
                     itemScript.OnPickedUp(mouthSocket);
                     hasItem = true;
-                    currentState = DogState.Fetching; // Switch brain to "I am coming back"
+                    currentState = DogState.Fetching;
                     
                 }
             }
         }
-        // PHASE 2: BRING IT BACK TO PLAYER
+     
         else if (currentState == DogState.Fetching && hasItem)
         {
-            // Aim for a point slightly in front of the player, not their feet
+        
             Vector3 targetPos = player.position + (transform.position - player.position).normalized * 1.2f;
             MoveToTarget(targetPos, walkSpeed, false);
 
-            // Use a slightly larger stopDistance (e.g., 1.8f) to ensure it triggers
             if (Vector3.Distance(transform.position, player.position) < 1.8f)
             {
                 StopMovement();
@@ -157,7 +156,6 @@ public class DogController : MonoBehaviour
     {
         float verticalDiff = player.position.y - transform.position.y;
 
-        // If player is significantly higher and we aren't already jumping
         if (verticalDiff > 1.5f && !isDogJumping)
         {
             StartCoroutine(DelayedJump());
@@ -168,18 +166,15 @@ public class DogController : MonoBehaviour
     {
         isDogJumping = true;
 
-        // The 1-second delay you asked for
         yield return new WaitForSeconds(1.0f);
 
-        // Apply the physics jump
         if (dogRb != null)
         {
-            // Reset velocity so the jump is consistent
+         
             dogRb.linearVelocity = new Vector3(dogRb.linearVelocity.x, 0, dogRb.linearVelocity.z);
             dogRb.AddForce(Vector3.up * dogJumpForce, ForceMode.Impulse);
         }
 
-        // Wait a bit before allowing another jump to prevent "bunny hopping"
         yield return new WaitForSeconds(1.5f);
         isDogJumping = false;
     }
@@ -192,10 +187,8 @@ public class DogController : MonoBehaviour
 
         if (inv != null)
         {
-            // Dog puts the ball "back" into your inventory system
             inv.CollectBall();
 
-            // Reset dog state
             hasItem = false;
             targetItem = null;
             currentState = DogState.Follow;
@@ -204,11 +197,9 @@ public class DogController : MonoBehaviour
 
         if (itemScript != null && playerScript != null)
         {
-            // SNAP TO PLAYER HAND - No Destroy() here, so the ball stays in the game
             itemScript.OnPickedUp(playerScript.handSocket);
             playerScript.ReceiveBallFromDog(itemScript);
 
-            // RESET DOG FOR NEXT THROW
             hasItem = false;
             targetItem = null;
             currentState = DogState.Follow;
@@ -236,7 +227,6 @@ public class DogController : MonoBehaviour
 
     void HandleAlertLogic()
     {
-        //anim.SetBool("IsAlert", true);
         FollowPlayer();
     }
 
@@ -261,13 +251,11 @@ public class DogController : MonoBehaviour
         Vector3 direction = targetPos - transform.position;
         direction.y = 0f;
 
-        // Only move if we are further than 0.5 units away
         if (direction.magnitude > 0.1f)
         {
             direction.Normalize();
             transform.Translate(direction * speed * Time.deltaTime, Space.World);
 
-            // Only rotate if the direction is significant
             if (direction != Vector3.zero)
             {
                 Quaternion targetRot = Quaternion.LookRotation(direction);
@@ -279,7 +267,7 @@ public class DogController : MonoBehaviour
         }
         else
         {
-            StopMovement(); // If we are close enough, just stop!
+            StopMovement(); 
         }
     }
 

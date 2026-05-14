@@ -43,6 +43,7 @@ public class PlayerController : MonoBehaviour
     public Transform handSocket;
     public float grabDistance = 2.0f;
     private fetchItem currentItem;
+    public Rigidbody ballRB;
 
     private KeyCode moveLeftKey;
     private KeyCode moveRightKey;
@@ -55,6 +56,10 @@ public class PlayerController : MonoBehaviour
     private bool isHoldingBall = false;
 
     public PlayerInvectory inv;
+    public LayerMask gateLayer;
+
+    [Header("Key")]
+    public bool isHoldingKey;
 
     [Header("Switching Logic")]
     public bool isControlled = true;
@@ -135,7 +140,7 @@ public class PlayerController : MonoBehaviour
     {
         anim.SetBool("isGrabbing", true);
         yield return new WaitForSeconds(0.5f);
-
+        
         Collider[] itemsFound = Physics.OverlapSphere(transform.position, grabDistance);
         foreach (var col in itemsFound)
         {
@@ -152,7 +157,7 @@ public class PlayerController : MonoBehaviour
                     inv.CollectBall();
                 }
                 item.OnPickedUp(throwPoint);
-                // 3. Deactivate World Object
+                
                
                 break;
             }
@@ -244,11 +249,19 @@ public class PlayerController : MonoBehaviour
 
     void HandlePushInput()
     {
+       
         RaycastHit hit;
-        bool hitSomething = Physics.Raycast(transform.position + Vector3.up * 0.5f, transform.forward, out hit, interactionDistance, pushLayer);
+        bool hitSomething = Physics.Raycast(transform.position + Vector3.up * 0.5f, transform.forward, out hit, interactionDistance, pushLayer | gateLayer);
         if (hitSomething && Input.GetKey(interactionKey))
         {
-            pushable p = hit.collider.GetComponent<pushable>();
+            GateRattle gate = hit.collider.GetComponent<GateRattle>();
+            if (gate != null)
+            {
+                gate.AttemptOpen(this.gameObject, anim);
+            }
+            
+
+                pushable p = hit.collider.GetComponent<pushable>();
             if (p != null)
             {
                 StartPushing(p);
@@ -262,7 +275,15 @@ public class PlayerController : MonoBehaviour
         if (isPushing) StopPushing();
         if (!isPushing && Input.GetKeyDown(interactionKey)) { if (dog != null) dog.TriggerWaypoint(); }
     }
-
+    private void OnTriggerEnter(Collider other)
+    {
+        if(other.CompareTag("Key"))
+        {
+            isHoldingKey = true;
+            Destroy(other.gameObject);
+            Debug.Log("Key collected! You can now unlock gates.");
+        }
+    }
     void StartPushing(pushable p) { isPushing = true; currentPushable = p; currentSpeed = pushSpeed; anim.SetBool("Push", true); }
     void StopPushing() { if (currentPushable != null) currentPushable.StopPush(); isPushing = false; currentPushable = null; currentSpeed = normalSpeed; anim.SetBool("Push", false); }
     public void ForceUnfreeze() { isFrozenByFear = false; if (vignette != null) vignette.intensity.value = 0; }
