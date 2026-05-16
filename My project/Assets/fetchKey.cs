@@ -6,7 +6,8 @@ public class fetchKey : MonoBehaviour
     public bool hasKey = false;
     private GameObject carriedKey;
     public bool fetched = true;
-
+    public CharacterSwitching Switching;
+    public DogController dogController;
     void Start()
     {
        fetched = true;
@@ -45,8 +46,7 @@ public class fetchKey : MonoBehaviour
 
         Debug.Log("Key dropped for the boy. Switching back...");
 
-       
-        FindObjectOfType<CharacterSwitching>().ToggleCharacter(false);
-       
+        Switching.ToggleCharacter(false);
+        dogController.currentState = DogController.DogState.Follow;
     }
 }

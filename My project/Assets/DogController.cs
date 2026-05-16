@@ -230,7 +230,7 @@ public class DogController : MonoBehaviour
         FollowPlayer();
     }
 
-    void FollowPlayer()
+     public void FollowPlayer()
     {
         float distance = Vector3.Distance(transform.position, player.position);
         if (distance > runDistance) MoveToTarget(player.position, runSpeed, true);
