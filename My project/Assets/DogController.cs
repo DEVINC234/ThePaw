@@ -74,13 +74,15 @@ public class DogController : MonoBehaviour
             case DogState.Follow: FollowPlayer(); break;
             case DogState.MovingToWaypoint:
                 if (waypoint != null) MoveToTarget(waypoint.position, runSpeed, true);
+                else currentState = DogState.Follow;
                 break;
+                
             case DogState.Waiting: HandleWaitingLogic(); break;
-            case DogState.Alert: HandleAlertLogic(); break;
-            case DogState.Fetching:
-                HandleFetchLogic();
-                break;
-        }
+                    case DogState.Alert: HandleAlertLogic(); break;
+                    case DogState.Fetching:
+                        HandleFetchLogic();
+                        break;
+                    }
 
         CheckForPlayerDistress();
         HandleHeightLogic();
@@ -286,7 +288,7 @@ public class DogController : MonoBehaviour
         isDistracting = false;
     }
 
-    void StopMovement() { anim.SetBool("Walk", false); anim.SetBool("Run", false); }// anim.SetBool("IsAlert", false); }
+    public void StopMovement() { anim.SetBool("Walk", false); anim.SetBool("Run", false); }// anim.SetBool("IsAlert", false); }
     public void TriggerWaypoint() { if (currentState == DogState.Follow) currentState = DogState.MovingToWaypoint; }
 
     void PlayfulCircle()
