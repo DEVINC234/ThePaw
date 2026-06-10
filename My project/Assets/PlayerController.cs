@@ -146,7 +146,7 @@ public class PlayerController : MonoBehaviour
         if(nearbyBall == true && !isHoldingBall)
         {
             anim.SetBool("isGrabbing", true);
-        }
+        
         
         yield return new WaitForSeconds(0.5f);
 
@@ -173,6 +173,7 @@ public class PlayerController : MonoBehaviour
                 break;
             }
         }
+        }
         anim.SetBool("isGrabbing", false);
     }
 
@@ -181,7 +182,7 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(0.3f);
         anim.SetBool("Throw", true);
 
-        if (currentItem != null || isHoldingBall)
+        if (isHoldingBall)
         {
             // 1. Tell Inventory the ball is gone (Lock Scroll + Hide Hand-Ball)
             if (inv != null)

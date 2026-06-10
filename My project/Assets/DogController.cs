@@ -99,7 +99,15 @@ public class DogController : MonoBehaviour
         if (Input.GetKey(KeyCode.S)) h = -1;
 
         Vector3 moveDir = new Vector3(h, 0, v);
-
+        if(Input.GetKeyDown(KeyCode.Space) && !isDogJumping)
+        {
+            anim.SetBool("Jump", true);
+           dogRb.linearVelocity = new Vector3(dogRb.linearVelocity.x, dogJumpForce, dogRb.linearVelocity.z); dogRb.AddForce(Vector3.up * dogJumpForce, ForceMode.Impulse);
+        }
+        else
+        {
+            anim.SetBool("Jump", false);
+        }
         if (moveDir.magnitude > 0.1f)
         {
             // Use your existing MoveToTarget logic but with manual direction
