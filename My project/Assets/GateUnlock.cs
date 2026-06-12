@@ -21,7 +21,7 @@ public class GateUnlock : MonoBehaviour
     {
        
         float elapsed = 0;
-        Quaternion targetRot = transform.rotation * Quaternion.Euler(0, 90, 0);
+        Quaternion targetRot = transform.rotation * Quaternion.Euler(0, -90, 0);
 
         while (elapsed < 1.5f)
         {
