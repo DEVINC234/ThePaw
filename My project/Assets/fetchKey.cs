@@ -14,18 +14,14 @@ public class fetchKey : MonoBehaviour
     }
     void OnTriggerEnter(Collider other)
     {
-        // 1. Dog touches the key
         if (other.CompareTag("Key") && !hasKey)
         {
             hasKey = true;
             carriedKey = other.gameObject;
 
-            // Snap to mouth
             carriedKey.GetComponent<Rigidbody>().isKinematic = true;
             carriedKey.transform.SetParent(mouthSocket);
             carriedKey.transform.localPosition = Vector3.zero;
-
-            Debug.Log("Dog fetched the key!");
         }
 
        

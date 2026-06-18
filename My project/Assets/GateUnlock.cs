@@ -29,8 +29,5 @@ public class GateUnlock : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
-
-        Debug.Log("BOOM! Level Complete. Time for bed.");
-        
     }
 }

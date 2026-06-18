@@ -107,13 +107,11 @@ public class PlayerController : MonoBehaviour
         HandlePushInput();
         HandleMovement();
 
-        // MODIFIED GRAB CHECK
         if (Input.GetKeyDown(interactionKey) && !isHoldingBall)
         {
             StartCoroutine(GrabSequence());
         }
 
-        // MODIFIED THROW CHECK (Checks Inventory state)
         if (inv != null && inv.IsHoldingBall() && Input.GetKeyDown(KeyCode.G))
         {
             StartCoroutine(ThrowSequence());
@@ -138,9 +136,6 @@ public class PlayerController : MonoBehaviour
 
         UpdateInteractionUI();
     }
-
-    // --- CORE MODIFICATIONS BELOW ---
-
     IEnumerator GrabSequence()
     {
         if(nearbyBall == true && !isHoldingBall)
@@ -158,11 +153,9 @@ public class PlayerController : MonoBehaviour
             if (item != null)
             {
                 
-                // 1. Logic Hand-off
                 currentItem = item;
                 isHoldingBall = true;
 
-                // 2. Tell Inventory to take over (Unlock Scroll + Show Hand-Ball)
                 if (inv != null)
                 {
                     inv.CollectBall();
@@ -184,28 +177,23 @@ public class PlayerController : MonoBehaviour
 
         if (isHoldingBall)
         {
-            // 1. Tell Inventory the ball is gone (Lock Scroll + Hide Hand-Ball)
             if (inv != null)
             {
                 inv.RemoveBallFromHand();
             }
 
             interactionText.gameObject.SetActive(false);
-            // 2. Re-activate the world ball at hand position
             //currentItem.gameObject.SetActive(true);
             currentItem.transform.position = handSocket.position;
 
-            // 3. Physic Release
             Rigidbody itemRb = currentItem.GetComponent<Rigidbody>();
             currentItem.OnDropped();
 
             Vector3 throwDir = (transform.forward + Vector3.up * 0.2f).normalized;
             itemRb.AddForce(throwDir * throwForce, ForceMode.Impulse);
 
-            // 4. Dog Logic
             if (dog != null) dog.GoFetch(currentItem.transform);
 
-            // 5. Reset local state
             currentItem = null;
             isHoldingBall = false;
         }
@@ -217,7 +205,6 @@ public class PlayerController : MonoBehaviour
         currentItem = returnedItem;
         isHoldingBall = true;
 
-        // Sync with inventory so the ball appears in hand automatically
         if (inv != null)
         {
             inv.CollectBall();
@@ -227,7 +214,6 @@ public class PlayerController : MonoBehaviour
      
     }
 
-    // [Keeping the rest of your original methods for Movement, Push, and Trauma]
     void UpdateInteractionUI()
     {
         if (interactionText == null) return;
