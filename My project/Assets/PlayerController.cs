@@ -42,7 +42,9 @@ public class PlayerController : MonoBehaviour
     [Header("Interaction Settings")]
     public Transform handSocket;
     public float grabDistance = 2.0f;
+    [SerializeField]
     private fetchItem currentItem;
+    public Rigidbody ballRB;
 
     private KeyCode moveLeftKey;
     private KeyCode moveRightKey;
@@ -52,9 +54,17 @@ public class PlayerController : MonoBehaviour
     private bool isPushing = false;
     private pushable currentPushable;
     private DogController dog;
+    [SerializeField]
     private bool isHoldingBall = false;
+    [SerializeField]
+    private bool nearbyBall = false;
 
     public PlayerInvectory inv;
+    public LayerMask gateLayer;
+    public LayerMask BallLayer;
+
+    [Header("Key")]
+    public bool isHoldingKey;
 
     [Header("Switching Logic")]
     public bool isControlled = true;
@@ -133,15 +143,21 @@ public class PlayerController : MonoBehaviour
 
     IEnumerator GrabSequence()
     {
-        anim.SetBool("isGrabbing", true);
+        if(nearbyBall == true && !isHoldingBall)
+        {
+            anim.SetBool("isGrabbing", true);
+        
+        
         yield return new WaitForSeconds(0.5f);
 
         Collider[] itemsFound = Physics.OverlapSphere(transform.position, grabDistance);
+       
         foreach (var col in itemsFound)
         {
             fetchItem item = col.GetComponent<fetchItem>();
             if (item != null)
             {
+                
                 // 1. Logic Hand-off
                 currentItem = item;
                 isHoldingBall = true;
@@ -152,10 +168,11 @@ public class PlayerController : MonoBehaviour
                     inv.CollectBall();
                 }
                 item.OnPickedUp(throwPoint);
-                // 3. Deactivate World Object
+                
                
                 break;
             }
+        }
         }
         anim.SetBool("isGrabbing", false);
     }
@@ -163,8 +180,9 @@ public class PlayerController : MonoBehaviour
     IEnumerator ThrowSequence()
     {
         yield return new WaitForSeconds(0.3f);
+        anim.SetBool("Throw", true);
 
-        if (currentItem != null)
+        if (isHoldingBall)
         {
             // 1. Tell Inventory the ball is gone (Lock Scroll + Hide Hand-Ball)
             if (inv != null)
@@ -191,6 +209,7 @@ public class PlayerController : MonoBehaviour
             currentItem = null;
             isHoldingBall = false;
         }
+        anim.SetBool("Throw", false);
     }
 
     public void ReceiveBallFromDog(fetchItem returnedItem)
@@ -205,7 +224,7 @@ public class PlayerController : MonoBehaviour
         }
         interactionText.gameObject.SetActive(true);
         //returnedItem.gameObject.SetActive(false);
-        Debug.Log("Ball received from dog. Ready to throw!");
+     
     }
 
     // [Keeping the rest of your original methods for Movement, Push, and Trauma]
@@ -244,11 +263,19 @@ public class PlayerController : MonoBehaviour
 
     void HandlePushInput()
     {
+       
         RaycastHit hit;
-        bool hitSomething = Physics.Raycast(transform.position + Vector3.up * 0.5f, transform.forward, out hit, interactionDistance, pushLayer);
+        bool hitSomething = Physics.Raycast(transform.position + Vector3.up * 0.5f, transform.forward, out hit, interactionDistance, pushLayer | gateLayer | BallLayer);
         if (hitSomething && Input.GetKey(interactionKey))
         {
-            pushable p = hit.collider.GetComponent<pushable>();
+            GateRattle gate = hit.collider.GetComponent<GateRattle>();
+            if (gate != null)
+            {
+                gate.AttemptOpen(this.gameObject, anim);
+            }
+           
+
+                pushable p = hit.collider.GetComponent<pushable>();
             if (p != null)
             {
                 StartPushing(p);
@@ -259,10 +286,29 @@ public class PlayerController : MonoBehaviour
                 return;
             }
         }
-        if (isPushing) StopPushing();
+        if (isPushing) { StopPushing(); dog.StopMovement(); }
         if (!isPushing && Input.GetKeyDown(interactionKey)) { if (dog != null) dog.TriggerWaypoint(); }
     }
-
+    private void OnTriggerEnter(Collider other)
+    {
+        if(other.CompareTag("Key"))
+        {
+            isHoldingKey = true;
+            Destroy(other.gameObject);
+          
+        }
+        if(other.CompareTag("Ball"))
+        {
+            nearbyBall = true;
+        }
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Ball"))
+        {
+            nearbyBall = false;
+        }
+    }
     void StartPushing(pushable p) { isPushing = true; currentPushable = p; currentSpeed = pushSpeed; anim.SetBool("Push", true); }
     void StopPushing() { if (currentPushable != null) currentPushable.StopPush(); isPushing = false; currentPushable = null; currentSpeed = normalSpeed; anim.SetBool("Push", false); }
     public void ForceUnfreeze() { isFrozenByFear = false; if (vignette != null) vignette.intensity.value = 0; }

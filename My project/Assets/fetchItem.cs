@@ -13,15 +13,17 @@ public class fetchItem : MonoBehaviour
     public void OnPickedUp(Transform attachPoint)
     {
         isHeld = true;
-        rb.isKinematic = true; // Stop physics so it doesn't fall
+        rb.isKinematic = true; 
+        GetComponent<Collider>().enabled = false;
         transform.parent = attachPoint;
-        transform.localPosition = Vector3.zero; // Snap to mouth
+        transform.localPosition = Vector3.zero; 
     }
 
     public void OnDropped()
     {
         isHeld = false;
         rb.isKinematic = false;
+        GetComponent<Collider>().enabled = true;
         transform.parent = null;
     }
 }

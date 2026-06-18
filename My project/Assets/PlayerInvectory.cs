@@ -11,7 +11,11 @@ public class PlayerInvectory : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        if (items[1] != null)
+        {
+            items[1].SetActive(false);
+            itText.gameObject.SetActive(false);
+        }
     }
 
     // Update is called once per frame
@@ -48,8 +52,14 @@ public class PlayerInvectory : MonoBehaviour
     public void CollectBall()
     {
         hasBallInPocket = true; // Unlocks the scroll wheel
-        currentIndex = 0;      // Move to the ball slot
-
+        currentIndex = 0;      
+        if(hasBallInPocket == true)
+        {
+            if (items[1] != null)
+            {
+                items[1].SetActive(true); // Show the ball in the inventory
+            }
+        }
         // Force the inventory to refresh and show the item
         //SwitchItem();
 
