@@ -48,6 +48,8 @@ public class PlayerController : MonoBehaviour
 
     private KeyCode moveLeftKey;
     private KeyCode moveRightKey;
+    private KeyCode moveUpKey;
+    private KeyCode moveDownKey;
     private KeyCode interactionKey;
 
     private float currentSpeed;
@@ -86,6 +88,8 @@ public class PlayerController : MonoBehaviour
     {
         moveLeftKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Left", "A"));
         moveRightKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "D"));
+        moveUpKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "W"));
+        moveDownKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "S"));
         interactionKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Interact", "E"));
     }
 
@@ -238,9 +242,11 @@ public class PlayerController : MonoBehaviour
         float moveInput = 0;
         if (Input.GetKey(moveLeftKey)) moveInput = 1;
         if (Input.GetKey(moveRightKey)) moveInput = -1;
+        if (Input.GetKey(moveUpKey)) moveInput = 1;
+        if (Input.GetKey(moveDownKey)) moveInput = -1;
         if (Mathf.Abs(moveInput) > 0.1f)
         {
-            if (!isPushing) { float targetY = (moveInput < 0) ? 180 : 0; transform.rotation = Quaternion.Euler(0, targetY, 0); }
+            if (!isPushing) { float targetY = (moveInput < 0) ? 180 : 0; transform.rotation = Quaternion.Euler(0, targetY, 0); float targetX = (moveInput < 0) ?  180 : 0; transform.rotation = Quaternion.Euler(0, targetX, 0); }
             transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
             anim.SetFloat("Run", currentSpeed);
         }
