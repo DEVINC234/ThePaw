@@ -11,6 +11,11 @@ public class PlayerController : MonoBehaviour
     public float pushSpeed = 2f;
     public Animator anim;
 
+    [Header("Depth Constraints (2.5D Mode)")]
+    public float maxBackgroundDepth = 4f;  // Max distance away from camera (W)
+    public float maxForegroundDepth = -2f; // Max distance toward camera (S)
+    public float rotationSpeed = 15f;      // How fast the character model turns to face movement
+
     [Header("UI Settings")]
     public Text interactionText;
     public float detectionRange = 2.5f;
@@ -48,8 +53,6 @@ public class PlayerController : MonoBehaviour
 
     private KeyCode moveLeftKey;
     private KeyCode moveRightKey;
-    private KeyCode moveUpKey;
-    private KeyCode moveDownKey;
     private KeyCode interactionKey;
 
     private float currentSpeed;
@@ -71,12 +74,22 @@ public class PlayerController : MonoBehaviour
     [Header("Switching Logic")]
     public bool isControlled = true;
 
+    // Movement tracking vectors for 4-way depth physics
+    private Vector3 moveInput;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         LoadControls();
         currentSpeed = normalSpeed;
         dog = FindObjectOfType<DogController>();
+
+        // Lock rotation on physics so the player doesn't tip over when walking into corners
+        if (rb != null)
+        {
+            rb.freezeRotation = true;
+        }
+
         if (traumaVolume != null)
         {
             traumaVolume.profile.TryGetSettings(out vignette);
@@ -88,8 +101,6 @@ public class PlayerController : MonoBehaviour
     {
         moveLeftKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Left", "A"));
         moveRightKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "D"));
-        moveUpKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "W"));
-        moveDownKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Right", "S"));
         interactionKey = (KeyCode)System.Enum.Parse(typeof(KeyCode), PlayerPrefs.GetString("Key_Interact", "E"));
     }
 
@@ -99,6 +110,7 @@ public class PlayerController : MonoBehaviour
         {
             anim.SetFloat("Run", 0);
             anim.SetBool("Push", false);
+            if (rb != null && isGrounded) rb.linearVelocity = new Vector3(0, rb.linearVelocity.y, 0);
             return;
         }
 
@@ -108,14 +120,17 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        // Process inputs first
+        GatherInput();
         HandlePushInput();
-        HandleMovement();
 
+        // MODIFIED GRAB CHECK
         if (Input.GetKeyDown(interactionKey) && !isHoldingBall)
         {
             StartCoroutine(GrabSequence());
         }
 
+        // MODIFIED THROW CHECK (Checks Inventory state)
         if (inv != null && inv.IsHoldingBall() && Input.GetKeyDown(KeyCode.G))
         {
             StartCoroutine(ThrowSequence());
@@ -140,36 +155,93 @@ public class PlayerController : MonoBehaviour
 
         UpdateInteractionUI();
     }
+
+    void FixedUpdate()
+    {
+        if (!isControlled || isFrozenByFear) return;
+
+        // Drive character using physics engine over velocity to interact cleanly with geometry
+        HandleMovementPhysics();
+    }
+
+    // --- CORE MODIFICATIONS: 4-WAY DEPTH SYSTEM ---
+
+    void GatherInput()
+    {
+        float moveX = 0f;
+        float moveZ = 0f;
+
+        // Support both your custom PlayerPrefs keys and standard Vertical scaling for depth
+        if (Input.GetKey(moveLeftKey)) moveX = 1f;
+        if (Input.GetKey(moveRightKey)) moveX = -1f;
+
+        // Use standard W/S or Up/Down arrows to step inside and out of the depth plane
+        moveZ = Input.GetAxisRaw("Vertical");
+
+        // Pack and normalize vector so diagonal speeds don't surpass standard movement rates
+        moveInput = new Vector3(moveZ, 0f, moveX).normalized;
+
+        // Handle visual rotations based on moving velocity vector
+        if (moveInput.magnitude > 0.01f && !isPushing)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveInput);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        }
+    }
+
+    void HandleMovementPhysics()
+    {
+        Vector3 targetVelocity = moveInput * currentSpeed;
+
+        if (moveInput.magnitude > 0.01f)
+        {
+            // Inject new target horizontal paths while preserving native gravitational speed drops
+            rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
+            anim.SetFloat("Run", currentSpeed);
+        }
+        else
+        {
+            // Halt horizontal forces immediately when inputs break
+            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+            anim.SetFloat("Run", 0f);
+        }
+
+        // Hard bound safety lock to clip spatial tracking between your custom room depths
+        Vector3 boundaryPosition = transform.position;
+        boundaryPosition.x = Mathf.Clamp(boundaryPosition.x, maxForegroundDepth, maxBackgroundDepth);
+        transform.position = boundaryPosition;
+    }
+
+    // --- END SYSTEM MODIFICATIONS ---
+
     IEnumerator GrabSequence()
     {
-        if(nearbyBall == true && !isHoldingBall)
+        if (nearbyBall == true && !isHoldingBall)
         {
             anim.SetBool("isGrabbing", true);
-        
-        
-        yield return new WaitForSeconds(0.5f);
 
-        Collider[] itemsFound = Physics.OverlapSphere(transform.position, grabDistance);
-       
-        foreach (var col in itemsFound)
-        {
-            fetchItem item = col.GetComponent<fetchItem>();
-            if (item != null)
+            yield return new WaitForSeconds(0.5f);
+
+            Collider[] itemsFound = Physics.OverlapSphere(transform.position, grabDistance);
+
+            foreach (var col in itemsFound)
             {
-                
-                currentItem = item;
-                isHoldingBall = true;
-
-                if (inv != null)
+                fetchItem item = col.GetComponent<fetchItem>();
+                if (item != null)
                 {
-                    inv.CollectBall();
+                    // 1. Logic Hand-off
+                    currentItem = item;
+                    isHoldingBall = true;
+
+                    // 2. Tell Inventory to take over (Unlock Scroll + Show Hand-Ball)
+                    if (inv != null)
+                    {
+                        inv.CollectBall();
+                    }
+                    item.OnPickedUp(throwPoint);
+                    break;
                 }
-                item.OnPickedUp(throwPoint);
-                
-               
-                break;
             }
-        }
         }
         anim.SetBool("isGrabbing", false);
     }
@@ -187,7 +259,6 @@ public class PlayerController : MonoBehaviour
             }
 
             interactionText.gameObject.SetActive(false);
-            //currentItem.gameObject.SetActive(true);
             currentItem.transform.position = handSocket.position;
 
             Rigidbody itemRb = currentItem.GetComponent<Rigidbody>();
@@ -214,8 +285,6 @@ public class PlayerController : MonoBehaviour
             inv.CollectBall();
         }
         interactionText.gameObject.SetActive(true);
-        //returnedItem.gameObject.SetActive(false);
-     
     }
 
     void UpdateInteractionUI()
@@ -235,27 +304,14 @@ public class PlayerController : MonoBehaviour
         interactionText.text = canGrab ? "Press [E] to Grab" : "";
     }
 
-    void PerformJump() { rb.linearVelocity = new Vector2(rb.linearVelocity.x, 0); rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); }
-
-    void HandleMovement()
+    void PerformJump()
     {
-        float moveInput = 0;
-        if (Input.GetKey(moveLeftKey)) moveInput = 1;
-        if (Input.GetKey(moveRightKey)) moveInput = -1;
-        if (Input.GetKey(moveUpKey)) moveInput = 1;
-        if (Input.GetKey(moveDownKey)) moveInput = -1;
-        if (Mathf.Abs(moveInput) > 0.1f)
-        {
-            if (!isPushing) { float targetY = (moveInput < 0) ? 180 : 0; transform.rotation = Quaternion.Euler(0, targetY, 0); float targetX = (moveInput < 0) ?  180 : 0; transform.rotation = Quaternion.Euler(0, targetX, 0); }
-            transform.Translate(Vector3.forward * currentSpeed * Time.deltaTime);
-            anim.SetFloat("Run", currentSpeed);
-        }
-        else anim.SetFloat("Run", 0);
+        rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
+        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }
 
     void HandlePushInput()
     {
-       
         RaycastHit hit;
         bool hitSomething = Physics.Raycast(transform.position + Vector3.up * 0.5f, transform.forward, out hit, interactionDistance, pushLayer | gateLayer | BallLayer);
         if (hitSomething && Input.GetKey(interactionKey))
@@ -265,9 +321,8 @@ public class PlayerController : MonoBehaviour
             {
                 gate.AttemptOpen(this.gameObject, anim);
             }
-           
 
-                pushable p = hit.collider.GetComponent<pushable>();
+            pushable p = hit.collider.GetComponent<pushable>();
             if (p != null)
             {
                 StartPushing(p);
@@ -281,19 +336,20 @@ public class PlayerController : MonoBehaviour
         if (isPushing) { StopPushing(); dog.StopMovement(); }
         if (!isPushing && Input.GetKeyDown(interactionKey)) { if (dog != null) dog.TriggerWaypoint(); }
     }
+
     private void OnTriggerEnter(Collider other)
     {
-        if(other.CompareTag("Key"))
+        if (other.CompareTag("Key"))
         {
             isHoldingKey = true;
             Destroy(other.gameObject);
-          
         }
-        if(other.CompareTag("Ball"))
+        if (other.CompareTag("Ball"))
         {
             nearbyBall = true;
         }
     }
+
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Ball"))
@@ -301,10 +357,10 @@ public class PlayerController : MonoBehaviour
             nearbyBall = false;
         }
     }
+
     void StartPushing(pushable p) { isPushing = true; currentPushable = p; currentSpeed = pushSpeed; anim.SetBool("Push", true); }
     void StopPushing() { if (currentPushable != null) currentPushable.StopPush(); isPushing = false; currentPushable = null; currentSpeed = normalSpeed; anim.SetBool("Push", false); }
     public void ForceUnfreeze() { isFrozenByFear = false; if (vignette != null) vignette.intensity.value = 0; }
     void HandleTraumaState() { if (vignette != null) vignette.intensity.value = Mathf.Lerp(vignette.intensity.value, 0, Time.deltaTime); if (colorGrading != null) colorGrading.saturation.value = Mathf.Lerp(colorGrading.saturation.value, 0, Time.deltaTime); if (vignette.intensity.value < 0.05f) isFrozenByFear = false; }
+
 }
-
-
