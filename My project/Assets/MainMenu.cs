@@ -49,7 +49,7 @@ public class MainMenu : MonoBehaviour
         Debug.Log("Game Exited");
     }
 
-    // --- Key Rebinding Logic ---
+   
     public void StartRebind(string action)
     {
         if (!isRebinding) StartCoroutine(RebindRoutine(action));
@@ -59,10 +59,9 @@ public class MainMenu : MonoBehaviour
     {
         isRebinding = true;
 
-        // Show the user we are waiting
+        
         SetText(action, "...");
 
-        // Wait for the mouse click to release
         yield return new WaitUntil(() => !Input.GetMouseButton(0));
 
         KeyCode detectedKey = KeyCode.None;
@@ -72,7 +71,7 @@ public class MainMenu : MonoBehaviour
             {
                 foreach (KeyCode k in System.Enum.GetValues(typeof(KeyCode)))
                 {
-                    // Ignore Mouse0 so the button click doesn't bind itself
+
                     if (Input.GetKeyDown(k) && k != KeyCode.Mouse0)
                     {
                         detectedKey = k;
@@ -83,7 +82,7 @@ public class MainMenu : MonoBehaviour
             yield return null;
         }
 
-        // Save to the "Bridge"
+
         PlayerPrefs.SetString("Key_" + action, detectedKey.ToString());
         PlayerPrefs.Save();
 

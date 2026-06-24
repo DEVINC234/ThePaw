@@ -8,7 +8,7 @@ public class PlayerInvectory : MonoBehaviour
     private int currentIndex = 0;
     public Text itText;
     public bool hasBallInPocket;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+
     void Start()
     {
         if (items[1] != null)
@@ -18,7 +18,6 @@ public class PlayerInvectory : MonoBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (hasBallInPocket)
@@ -51,16 +50,16 @@ public class PlayerInvectory : MonoBehaviour
     }
     public void CollectBall()
     {
-        hasBallInPocket = true; // Unlocks the scroll wheel
+        hasBallInPocket = true; 
         currentIndex = 0;      
         if(hasBallInPocket == true)
         {
             if (items[1] != null)
             {
-                items[1].SetActive(true); // Show the ball in the inventory
+                items[1].SetActive(true); 
             }
         }
-        // Force the inventory to refresh and show the item
+
         //SwitchItem();
 
         if (itText != null)
@@ -69,7 +68,7 @@ public class PlayerInvectory : MonoBehaviour
         }
     }
 
-    // Call this the moment the ball leaves the hand
+
     public void RemoveBallFromHand()
     {
         hasBallInPocket = false;
@@ -78,7 +77,7 @@ public class PlayerInvectory : MonoBehaviour
             items[1].SetActive(false); 
             itText.gameObject.SetActive(false);
         }
-        currentIndex = 1; // Switch back to Empty Hand (GTA style)
+        currentIndex = 1; 
         //itText.gameObject.SetActive(false);
     }
     public void SwitchItem()
@@ -91,8 +90,6 @@ public class PlayerInvectory : MonoBehaviour
     }
     public bool IsHoldingBall()
     {
-        // Check if current item is not the "Empty Hand" (index 0) 
-        // and if the active item has the "Ball" tag
         if (currentIndex < items.Length && items[currentIndex] != null)
         {
             return items[currentIndex].CompareTag("Ball") && items[currentIndex].activeSelf;

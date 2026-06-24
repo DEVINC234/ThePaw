@@ -33,12 +33,10 @@ public class GateRattle : MonoBehaviour
 
         Quaternion originalCamRot = mainCamera.transform.rotation;
 
-        // 1. Push Animation
         playerAnim.SetBool("Push", true);
         yield return new WaitForSeconds(1.5f);
         playerAnim.SetBool("Push", false);
 
-        // 2. Look UP at the gate
         float elapsed = 0;
         while (elapsed < lookUpDuration)
         {
@@ -48,12 +46,10 @@ public class GateRattle : MonoBehaviour
             yield return null;
         }
 
-        // 3. Shake Head (Wait for this to finish)
         yield return StartCoroutine(SimulateHeadShake(player.transform));
 
-        // 4. RESET Camera back to normal
         elapsed = 0;
-        while (elapsed < 1.0f) // Take 1 second to look back down
+        while (elapsed < 1.0f) 
         {
             mainCamera.transform.rotation = Quaternion.Slerp(mainCamera.transform.rotation, originalCamRot, elapsed / 1.0f);
             elapsed += Time.deltaTime;
@@ -62,7 +58,6 @@ public class GateRattle : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
-        // 5. Switch to Dog
         if (switchManager != null)
         {
             switchManager.ToggleCharacter(true);

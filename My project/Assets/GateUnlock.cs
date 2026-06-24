@@ -30,7 +30,6 @@ public class GateUnlock : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log("BOOM! Level Complete. Time for bed.");
         
     }
 }

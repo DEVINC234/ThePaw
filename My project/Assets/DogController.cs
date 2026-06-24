@@ -37,7 +37,7 @@ public class DogController : MonoBehaviour
     private bool isDogJumping = false;
 
     [Header("Fetch Settings")]
-    public Transform mouthSocket; // Create an empty GameObject at the dog's mouth
+    public Transform mouthSocket; 
     private Transform targetItem;
     private bool hasItem = false;
 
@@ -64,7 +64,7 @@ public class DogController : MonoBehaviour
         if (isControlled)
         {
             HandleManualMovement();
-            return; // Skip the switch statement below
+            return; 
         }
         ScanForEnemies();
 
@@ -110,7 +110,7 @@ public class DogController : MonoBehaviour
         }
         if (moveDir.magnitude > 0.1f)
         {
-            // Use your existing MoveToTarget logic but with manual direction
+            
             MoveToTarget(transform.position + moveDir, runSpeed, true);
         }
         else
