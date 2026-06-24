@@ -7,6 +7,8 @@ TagManager:
   - Ball
   - HandOffZone
   - Key
+  - Ladder
+  - Dog
   layers:
   - Default
   - TransparentFX
