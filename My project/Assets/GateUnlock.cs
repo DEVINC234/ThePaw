@@ -29,5 +29,7 @@ public class GateUnlock : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+
+        
     }
 }

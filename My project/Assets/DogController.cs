@@ -110,6 +110,7 @@ public class DogController : MonoBehaviour
         }
         if (moveDir.magnitude > 0.1f)
         {
+            
             MoveToTarget(transform.position + moveDir, runSpeed, true);
         }
         else
@@ -201,6 +202,7 @@ public class DogController : MonoBehaviour
             hasItem = false;
             targetItem = null;
             currentState = DogState.Follow;
+            Debug.Log("Ball returned to inventory slot 1.");
         }
 
         if (itemScript != null && playerScript != null)
@@ -211,6 +213,8 @@ public class DogController : MonoBehaviour
             hasItem = false;
             targetItem = null;
             currentState = DogState.Follow;
+
+            Debug.Log("Ball handed back to player hand successfully.");
         }
     }
     void ScanForEnemies()

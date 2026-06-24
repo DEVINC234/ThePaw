@@ -50,15 +50,16 @@ public class PlayerInvectory : MonoBehaviour
     }
     public void CollectBall()
     {
-        hasBallInPocket = true;
+        hasBallInPocket = true; 
         currentIndex = 0;      
         if(hasBallInPocket == true)
         {
             if (items[1] != null)
             {
-                items[1].SetActive(true);
+                items[1].SetActive(true); 
             }
         }
+
         //SwitchItem();
 
         if (itText != null)
@@ -66,6 +67,7 @@ public class PlayerInvectory : MonoBehaviour
             itText.gameObject.SetActive(true);
         }
     }
+
 
     public void RemoveBallFromHand()
     {
@@ -75,7 +77,7 @@ public class PlayerInvectory : MonoBehaviour
             items[1].SetActive(false); 
             itText.gameObject.SetActive(false);
         }
-        currentIndex = 1;
+        currentIndex = 1; 
         //itText.gameObject.SetActive(false);
     }
     public void SwitchItem()
