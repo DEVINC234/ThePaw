@@ -22,8 +22,6 @@ public class fetchKey : MonoBehaviour
             carriedKey.GetComponent<Rigidbody>().isKinematic = true;
             carriedKey.transform.SetParent(mouthSocket);
             carriedKey.transform.localPosition = Vector3.zero;
-
-            Debug.Log("Dog fetched the key!");
         }
 
        
